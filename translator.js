@@ -124,10 +124,10 @@ module.exports = async (from, to, text, callback) => {
     }
 
     await page.keyboard.down('Control');
-    await page.keyboard.press('KeyA', { delay: 100 });
+    await page.keyboard.press('KeyA');
     await page.keyboard.up('Control');
-    await page.keyboard.press('Delete', { delay: 10 });
-    await page.keyboard.type(text, { delay: 100 });
+    await page.keyboard.press('Delete');
+    await page.keyboard.type(text);
 
     const response = await page.waitForResponse(res => {
       return res.url().includes('translate_a/single?');
