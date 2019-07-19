@@ -12,14 +12,28 @@ npm install github:Blaud/GoogleTranslateFree
 var translator = require('GoogleTranslateFree');
 
 /*
-Translate 'Hello'
+Translate somw words
 from	:	English
-to		:	French
+to		:	Russian
 */
 
-translator('en', 'fr', 'Hello', response => {
-  console.log(response);
-});
+(async () => {
+  await translator('en', 'ru', 'meow', async response => {
+    console.log(response.text);
+  });
+
+  await translator('en', 'ru', 'time', async response => {
+    console.log(response.text);
+  });
+
+  await translator('en', 'ru', 'date', async response => {
+    console.log(response.text);
+  });
+
+  await translator('en', 'ru', 'now', async response => {
+    console.log(response.text);
+  });
+})();
 ```
 
 You may also pass `undefined` as the origin language to have Google Translate auto-detect the input. For example:
@@ -169,99 +183,81 @@ output :
 }
 ```
 
-Wrong sentences
-
-```javascript
-var translator = require('google-translator');
-
-translator('en', 'fr', 'helloe', response => {
-  if (response.isCorrect == false) {
-    console.log('did you mean : %s ?', response.text);
-  }
-});
-```
-
-output :
-
-```
-Did You Mean : hello ?
-```
-
-List of all available languages
-
-```javascript
-var translator = require('google-translator');
-
 console.log(translator.languages);
+
 ```
 
 output :
 
 ```
+
 {
-	af: 'Afrikaans',
-	sq: 'Albanian',
-	ar: 'Arabic',
-	az: 'Azerbaijani',
-	eu: 'Basque',
-	bn: 'Bengali',
-	be: 'Belarusian',
-	bg: 'Bulgarian',
-	ca: 'Catalan',
-	'zh-cn': 'Chinese Simplified',
-	'zh-tw': 'Chinese Traditional',
-	hr: 'Croatian',
-	cs: 'Czech',
-	da: 'Danish',
-	nl: 'Dutch',
-	en: 'English',
-	eo: 'Esperanto',
-	et: 'Estonian',
-	tl: 'Filipino',
-	fi: 'Finnish',
-	fr: 'French',
-	gl: 'Galician',
-	ka: 'Georgian',
-	de: 'German',
-	el: 'Greek',
-	gu: 'Gujarati',
-	ht: 'Haitian Creole',
-	iw: 'Hebrew',
-	hi: 'Hindi',
-	hu: 'Hungarian',
-	is: 'Icelandic',
-	id: 'Indonesian',
-	ga: 'Irish',
-	it: 'Italian',
-	ja: 'Japanese',
-	kn: 'Kannada',
-	ko: 'Korean',
-	la: 'Latin',
-	lv: 'Latvian',
-	lt: 'Lithuanian',
-	mk: 'Macedonian',
-	ms: 'Malay',
-	mt: 'Maltese',
-	no: 'Norwegian',
-	fa: 'Persian',
-	pl: 'Polish',
-	pt: 'Portuguese',
-	ro: 'Romanian',
-	ru: 'Russian',
-	sr: 'Serbian',
-	sk: 'Slovak',
-	sl: 'Slovenian',
-	es: 'Spanish',
-	sw: 'Swahili',
-	sv: 'Swedish',
-	ta: 'Tamil',
-	te: 'Telugu',
-	th: 'Thai',
-	tr: 'Turkish',
-	uk: 'Ukrainian',
-	ur: 'Urdu',
-	vi: 'Vietnamese',
-	cy: 'Welsh',
-	yi: 'Yiddish'
+af: 'Afrikaans',
+sq: 'Albanian',
+ar: 'Arabic',
+az: 'Azerbaijani',
+eu: 'Basque',
+bn: 'Bengali',
+be: 'Belarusian',
+bg: 'Bulgarian',
+ca: 'Catalan',
+'zh-cn': 'Chinese Simplified',
+'zh-tw': 'Chinese Traditional',
+hr: 'Croatian',
+cs: 'Czech',
+da: 'Danish',
+nl: 'Dutch',
+en: 'English',
+eo: 'Esperanto',
+et: 'Estonian',
+tl: 'Filipino',
+fi: 'Finnish',
+fr: 'French',
+gl: 'Galician',
+ka: 'Georgian',
+de: 'German',
+el: 'Greek',
+gu: 'Gujarati',
+ht: 'Haitian Creole',
+iw: 'Hebrew',
+hi: 'Hindi',
+hu: 'Hungarian',
+is: 'Icelandic',
+id: 'Indonesian',
+ga: 'Irish',
+it: 'Italian',
+ja: 'Japanese',
+kn: 'Kannada',
+ko: 'Korean',
+la: 'Latin',
+lv: 'Latvian',
+lt: 'Lithuanian',
+mk: 'Macedonian',
+ms: 'Malay',
+mt: 'Maltese',
+no: 'Norwegian',
+fa: 'Persian',
+pl: 'Polish',
+pt: 'Portuguese',
+ro: 'Romanian',
+ru: 'Russian',
+sr: 'Serbian',
+sk: 'Slovak',
+sl: 'Slovenian',
+es: 'Spanish',
+sw: 'Swahili',
+sv: 'Swedish',
+ta: 'Tamil',
+te: 'Telugu',
+th: 'Thai',
+tr: 'Turkish',
+uk: 'Ukrainian',
+ur: 'Urdu',
+vi: 'Vietnamese',
+cy: 'Welsh',
+yi: 'Yiddish'
 }
+
+```
+
 ```

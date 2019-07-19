@@ -6,6 +6,8 @@ const mime = require('mime');
 const URL = require('url').URL;
 let browser = undefined;
 let page = undefined;
+let lastfromlang;
+let lasttolang;
 
 const Languages = {
   af: 'Afrikaans',
@@ -106,21 +108,26 @@ module.exports = async (from, to, text, callback) => {
   let content = '';
 
   try {
-    await page.goto(
-      'http://translate.google.com/#view=home&op=translate&sl=' +
-        (detectlanguage ? '' : from) +
-        '&tl=' +
-        to,
-      {
-        waitUntil: 'networkidle2',
-      }
-    );
+    if (page && lastfromlang === from && lasttolang === to) {
+    } else {
+      lastfromlang = from;
+      lasttolang = to;
+      await page.goto(
+        'http://translate.google.com/#view=home&op=translate&sl=' +
+          (detectlanguage ? '' : from) +
+          '&tl=' +
+          to,
+        {
+          waitUntil: 'networkidle2',
+        }
+      );
+    }
 
     await page.keyboard.down('Control');
-    await page.keyboard.press('KeyA');
+    await page.keyboard.press('KeyA', { delay: 100 });
     await page.keyboard.up('Control');
-    await page.keyboard.press('Delete');
-    await page.keyboard.type(text);
+    await page.keyboard.press('Delete', { delay: 10 });
+    await page.keyboard.type(text, { delay: 100 });
 
     const response = await page.waitForResponse(res => {
       return res.url().includes('translate_a/single?');
