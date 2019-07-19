@@ -5,6 +5,7 @@ const fs = require('fs');
 const mime = require('mime');
 const URL = require('url').URL;
 let browser = undefined;
+let page = undefined;
 
 const Languages = {
   af: 'Afrikaans',
@@ -79,6 +80,7 @@ function Exception(message) {
 
 module.exports = async (from, to, text, callback) => {
   if (!browser) browser = await puppeteer.launch();
+  if (!page) page = await browser.newPage();
   if (from) {
     from = from.toLowerCase();
   }
@@ -102,7 +104,6 @@ module.exports = async (from, to, text, callback) => {
     throw new Exception('Cannot translate undefined or empty text string');
   }
   let content = '';
-  const page = await browser.newPage();
 
   try {
     await page.goto(
@@ -115,6 +116,10 @@ module.exports = async (from, to, text, callback) => {
       }
     );
 
+    await page.keyboard.down('Control');
+    await page.keyboard.press('KeyA');
+    await page.keyboard.up('Control');
+    await page.keyboard.press('Delete');
     await page.keyboard.type(text);
 
     const response = await page.waitForResponse(res => {
@@ -224,10 +229,11 @@ module.exports = async (from, to, text, callback) => {
       isValid = false;
     }
     if (isValid) callback(translated);
-    await page.close();
   } catch (e) {
     callback({ text: content, isCorrect: false });
     isValid = false;
     console.log(e);
+    await page.close();
+    await browser.close();
   }
 };
