@@ -103,131 +103,131 @@ module.exports = async (from, to, text, callback) => {
   }
   let content = '';
   const page = await browser.newPage();
-  page.on('response', async response => {
-    const req = response.request();
-    if (req.url().includes('translate_a/single?')) {
-      const buffer = await response.buffer();
-      isValid = true;
-      content = eval(`${buffer}`);
-      let translated = {
-        text: '',
-        isCorrect: true,
-        source: {
-          synonyms: [],
-          pronunciation: [],
-          definitions: [],
-          examples: [],
-        },
-        target: {
-          synonyms: [],
-        },
-        translations: [],
-      };
-      try {
-        //translated.text = content[0][0][0];
-        //now it works for larger content
-        if (content[0][content[0].length - 1][0] === null) content[0].pop();
-        content[0].forEach(element => {
-          translated.text += element[0];
-        });
-        //target synonyms
-        if (
-          content[1] != null &&
-          content[1][0] != null &&
-          content[1][0][1] != null
-        ) {
-          if (content[1][0][1].length > 0) {
-            content[1][0][1].forEach(synonyms => {
-              translated.target.synonyms.push(synonyms);
-            });
-          }
-        }
 
-        //target translations
-        if (content[1] != null) {
-          content[1].forEach(translation => {
-            var type = {
-              type: translation[0],
-              translations: [],
-            };
-            translation[2].forEach(translations => {
-              type.translations.push([translations[0], translations[1]]);
-            });
-            translated.translations.push(type);
-          });
-        }
-
-        //source synonyms
-        if (
-          content[11] != null &&
-          content[11][0] != null &&
-          content[11][0][1] != null
-        ) {
-          if (content[11][0][1].length > 0) {
-            content[11][0][1].forEach(synonyms => {
-              translated.source.synonyms.push(synonyms[0]);
-            });
-          }
-        }
-
-        //pronunciation
-        if (content[0][1] != null) {
-          content[0][1].forEach(pronunciation => {
-            if (pronunciation != null) {
-              translated.source.pronunciation.push(pronunciation);
-            }
-          });
-        }
-
-        //definitions
-        if (content[12] != null) {
-          content[12].forEach(definitions => {
-            var define = {
-              type: definitions[0],
-              definitions: [],
-            };
-            definitions[1].forEach(one => {
-              define.definitions.push({
-                definition: one[0],
-                example: one[2],
-              });
-            });
-            translated.source.definitions.push(define);
-          });
-        }
-        //examples
-        if (content[13] != null && content[13][0] != null) {
-          var TextWithoutTags = '';
-          content[13][0].forEach(examples => {
-            if (examples != null) {
-              TextWithoutTags = examples[0].replace(/(<([^>]+)>)/gi, '');
-              translated.source.examples.push(TextWithoutTags);
-            }
-          });
-        }
-      } catch (e) {
-        callback({ text: content, isCorrect: false });
-        isValid = false;
+  try {
+    await page.goto(
+      'http://translate.google.com/#view=home&op=translate&sl=' +
+        (detectlanguage ? '' : from) +
+        '&tl=' +
+        to,
+      {
+        waitUntil: 'networkidle2',
       }
-      if (isValid) callback(translated);
+    );
+
+    await page.keyboard.type(text);
+
+    const response = await page.waitForResponse(res => {
+      return res.url().includes('translate_a/single?');
+    });
+    const buffer = await response.buffer();
+    isValid = true;
+    content = eval(`${buffer}`);
+    let translated = {
+      text: '',
+      isCorrect: true,
+      source: {
+        synonyms: [],
+        pronunciation: [],
+        definitions: [],
+        examples: [],
+      },
+      target: {
+        synonyms: [],
+      },
+      translations: [],
+    };
+    try {
+      //translated.text = content[0][0][0];
+      //now it works for larger content
+      if (content[0][content[0].length - 1][0] === null) content[0].pop();
+      content[0].forEach(element => {
+        translated.text += element[0];
+      });
+      //target synonyms
+      if (
+        content[1] != null &&
+        content[1][0] != null &&
+        content[1][0][1] != null
+      ) {
+        if (content[1][0][1].length > 0) {
+          content[1][0][1].forEach(synonyms => {
+            translated.target.synonyms.push(synonyms);
+          });
+        }
+      }
+
+      //target translations
+      if (content[1] != null) {
+        content[1].forEach(translation => {
+          var type = {
+            type: translation[0],
+            translations: [],
+          };
+          translation[2].forEach(translations => {
+            type.translations.push([translations[0], translations[1]]);
+          });
+          translated.translations.push(type);
+        });
+      }
+
+      //source synonyms
+      if (
+        content[11] != null &&
+        content[11][0] != null &&
+        content[11][0][1] != null
+      ) {
+        if (content[11][0][1].length > 0) {
+          content[11][0][1].forEach(synonyms => {
+            translated.source.synonyms.push(synonyms[0]);
+          });
+        }
+      }
+
+      //pronunciation
+      if (content[0][1] != null) {
+        content[0][1].forEach(pronunciation => {
+          if (pronunciation != null) {
+            translated.source.pronunciation.push(pronunciation);
+          }
+        });
+      }
+
+      //definitions
+      if (content[12] != null) {
+        content[12].forEach(definitions => {
+          var define = {
+            type: definitions[0],
+            definitions: [],
+          };
+          definitions[1].forEach(one => {
+            define.definitions.push({
+              definition: one[0],
+              example: one[2],
+            });
+          });
+          translated.source.definitions.push(define);
+        });
+      }
+      //examples
+      if (content[13] != null && content[13][0] != null) {
+        var TextWithoutTags = '';
+        content[13][0].forEach(examples => {
+          if (examples != null) {
+            TextWithoutTags = examples[0].replace(/(<([^>]+)>)/gi, '');
+            translated.source.examples.push(TextWithoutTags);
+          }
+        });
+      }
+    } catch (e) {
+      callback({ text: content, isCorrect: false });
+      isValid = false;
     }
-  });
-
-  await page.goto(
-    'http://translate.google.com/#view=home&op=translate&sl=' +
-      (detectlanguage ? '' : from) +
-      '&tl=' +
-      to,
-    {
-      waitUntil: 'networkidle2',
-    }
-  );
-
-  await page.keyboard.type(text);
-
-  const response = await page.waitForResponse(
-    new RegExp('https://translate.google.com/translate_a/single*')
-  );
-  console.log(response);
-  page.close();
+    if (isValid) callback(translated);
+    await page.close();
+  } catch (e) {
+    callback({ text: content, isCorrect: false });
+    isValid = false;
+    console.log(e);
+  }
 };
