@@ -1,0 +1,32 @@
+{
+  "name": "googletranslatefree",
+  "version": "1.0.4",
+  "description": "Google Translate API for Free with nodejs",
+  "main": "translator.js",
+  "scripts": {
+    "test": "node test"
+  },
+  "keywords": [
+    "google",
+    "translator",
+    "free",
+    "api",
+    "translate"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Blaud/GoogleTranslateFree.git"
+  },
+  "author": {
+    "name": "Nikolay Dvoeglazov",
+    "email": "iblaudi@gmail.com",
+    "url": "https://blaud.ru"
+  },
+  "bugs": {
+    "url": "https://github.com/Blaud/GoogleTranslateFree/issues"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "^1.18.1"
+  }
+}
