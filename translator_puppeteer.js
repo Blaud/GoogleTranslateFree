@@ -1,11 +1,14 @@
-﻿'use strict';
 const https = require('https');
-const querystring = require('querystring');
 
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const mime = require('mime');
 const URL = require('url').URL;
+let browser = undefined;
+let page = undefined;
+let lastfromlang;
+let lasttolang;
+let isNowWorking = false;
 
 const Languages = {
   af: 'Afrikaans',
@@ -78,95 +81,85 @@ function Exception(message) {
   this.message = message;
 }
 
-module.exports = (from, to, text, callback) => {
-  //var correctChineseLanguage = (lang) => { return lang= (lang=='zh-cn') ? 'zh-CN' : (lang=='zh-tw') ? 'zh-TW' : lang }
-
-  if (from) {
-    from = from.toLowerCase();
-  }
-  if (to) {
-    to = to.toLowerCase();
-  }
-
-  var detectlanguage = false;
-
-  if (from == undefined) {
-    detectlanguage = true;
-  } else if (!(from in Languages)) {
-    throw new Exception('Cannot translate from unknown language: ' + from);
-  }
-
-  if (to == undefined || !(to in Languages)) {
-    throw new Exception('Cannot translate to unknown language: ' + to);
-  }
-
-  if (text == undefined || text.length == 0) {
-    throw new Exception('Cannot translate undefined or empty text string');
-  }
-
-  text = querystring.escape(text);
-
-  var options = {
-    host: 'translate.google.com',
-    port: 443,
-    path:
-      '/translate_a/single?client=gtx&ie=UTF-8&oe=UTF-8' +
-      (detectlanguage ? '' : '&sl=' + from) +
-      '&tl=' +
-      to +
-      '&dt=t&q=' +
-      text +
-      '&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t&dt=at',
-    headers: {
-      Accept: '*/*',
-      'Accept-Language': 'en-US,en;q=0.5',
-      'Content-Type': 'application/json',
-      referer: 'https://translate.google.com/',
-      'user-agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
-    },
-  };
-
-  https.get(options, response => {
-    var content = '';
-    response.on('data', chunk => {
-      content += chunk;
-    });
-    response.on('end', () => {
-      let isValid = true;
-      try {
-        content = eval(content);
-      } catch (e) {
-        callback({ text: content, isCorrect: false });
-        isValid = false;
+module.exports = async (from, to, text, callback) => {
+  const translate = async (from, to, text, callback) => {
+    if (!isNowWorking) {
+      isNowWorking = true;
+      if (!browser) browser = await puppeteer.launch();
+      if (!page) page = await browser.newPage();
+      if (from) {
+        from = from.toLowerCase();
+      }
+      if (to) {
+        to = to.toLowerCase();
       }
 
-      var translated = {
-        text: '',
-        isCorrect: true,
-        source: {
-          synonyms: [],
-          pronunciation: [],
-          definitions: [],
-          examples: [],
-        },
-        target: {
-          synonyms: [],
-        },
-        translations: [],
-      };
+      var detectlanguage = false;
+
+      if (from == undefined) {
+        detectlanguage = true;
+      } else if (!(from in Languages)) {
+        throw new Exception('Cannot translate from unknown language: ' + from);
+      }
+
+      if (to == undefined || !(to in Languages)) {
+        throw new Exception('Cannot translate to unknown language: ' + to);
+      }
+
+      if (text == undefined || text.length == 0) {
+        throw new Exception('Cannot translate undefined or empty text string');
+      }
+      let content = '';
+
       try {
-        if (content[7] != null) {
-          translated.isCorrect = false;
-          translated.text = content[7][1];
+        if (page && lastfromlang === from && lasttolang === to) {
         } else {
+          lastfromlang = from;
+          lasttolang = to;
+          await page.goto(
+            'http://translate.google.com/#view=home&op=translate&sl=' +
+              (detectlanguage ? '' : from) +
+              '&tl=' +
+              to,
+            {
+              waitUntil: 'networkidle2',
+            }
+          );
+        }
+
+        await page.keyboard.down('Control');
+        await page.keyboard.press('KeyA');
+        await page.keyboard.up('Control');
+        await page.keyboard.press('Delete');
+        await page.keyboard.type(text);
+
+        const response = await page.waitForResponse(res => {
+          return res.url().includes('translate_a/single?');
+        });
+        const buffer = await response.buffer();
+        isValid = true;
+        content = eval(`${buffer}`);
+        let translated = {
+          text: '',
+          isCorrect: true,
+          source: {
+            synonyms: [],
+            pronunciation: [],
+            definitions: [],
+            examples: [],
+          },
+          target: {
+            synonyms: [],
+          },
+          translations: [],
+        };
+        try {
           //translated.text = content[0][0][0];
           //now it works for larger content
           if (content[0][content[0].length - 1][0] === null) content[0].pop();
           content[0].forEach(element => {
             translated.text += element[0];
           });
-
           //target synonyms
           if (
             content[1] != null &&
@@ -242,14 +235,28 @@ module.exports = (from, to, text, callback) => {
               }
             });
           }
+        } catch (e) {
+          isNowWorking = false;
+          callback({ text: content, isCorrect: false });
+          isValid = false;
+        }
+        if (isValid) {
+          isNowWorking = false;
+          callback(translated);
         }
       } catch (e) {
+        isNowWorking = false;
         callback({ text: content, isCorrect: false });
         isValid = false;
+        console.log(e);
+        await page.close();
+        await browser.close();
       }
-      if (isValid) callback(translated);
-    });
-  });
+    } else {
+      setTimeout(() => {
+        translate(from, to, text, callback);
+      }, 100);
+    }
+  };
+  translate(from, to, text, callback);
 };
-
-module.exports.languages = Languages;
