@@ -26,5 +26,8 @@
     "url": "https://github.com/Blaud/GoogleTranslateFree/issues"
   },
   "license": "MIT",
-  "dependencies": {}
+  "dependencies": {
+    "configstore": "^5.0.0",
+    "got": "^9.6.0"
+  }
 }
